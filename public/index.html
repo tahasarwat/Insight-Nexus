@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Insight Nexus</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Insight Nexus</h1>
+      <p>E-commerce Data Warehouse Analytics Dashboard</p>
+    </header>
+
+    <main>
+      <section class="card">
+        <h2>Warehouse Health</h2>
+        <div id="health"></div>
+      </section>
+
+      <section class="card">
+        <h2>Core KPIs</h2>
+        <div id="kpis" class="kpi-grid"></div>
+      </section>
+
+      <section class="card">
+        <h2>Top Customers</h2>
+        <table id="topCustomersTable">
+          <thead>
+            <tr><th>ID</th><th>Name</th><th>Total Spending</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <section class="card">
+        <h2>Sales by Category</h2>
+        <canvas id="categoryChart"></canvas>
+        <table id="categoryTable">
+          <thead>
+            <tr><th>Category</th><th>Sales</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <section class="card">
+        <h2>Monthly Revenue Growth</h2>
+        <canvas id="revenueChart"></canvas>
+        <table id="growthTable">
+          <thead>
+            <tr><th>Year</th><th>Month</th><th>Revenue</th><th>Previous Revenue</th><th>Growth</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <section class="card">
+        <h2>Customer Segments</h2>
+        <canvas id="segmentsChart"></canvas>
+        <table id="segmentsTable">
+          <thead>
+            <tr><th>ID</th><th>Name</th><th>Recency (days)</th><th>Frequency</th><th>Monetary</th><th>Segment</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <section class="card form-grid">
+        <div>
+          <h2>Add Customer</h2>
+          <form id="customerForm">
+            <input name="name" placeholder="Name" required />
+            <input name="city" placeholder="City" required />
+            <input name="state" placeholder="State" required />
+            <input name="country" placeholder="Country" value="USA" required />
+            <input name="age_group" placeholder="Age Group (e.g. 25-34)" required />
+            <input name="gender" placeholder="Gender" required />
+            <input name="signup_date" type="date" required />
+            <button type="submit">Create Customer</button>
+          </form>
+          <p id="customerMsg"></p>
+        </div>
+        <div>
+          <h2>Add Sale (Fact Insert)</h2>
+          <form id="saleForm">
+            <input name="customer_id" type="number" placeholder="Customer ID" required />
+            <input name="product_id" type="number" placeholder="Product ID" required />
+            <input name="full_date" type="date" required />
+            <input name="quantity" type="number" placeholder="Quantity" min="1" required />
+            <input name="unit_price" type="number" step="0.01" placeholder="Unit Price" required />
+            <input name="discount_pct" type="number" step="0.01" placeholder="Discount %" value="0" />
+            <button type="submit">Insert Sale</button>
+          </form>
+          <p id="saleMsg"></p>
+        </div>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
