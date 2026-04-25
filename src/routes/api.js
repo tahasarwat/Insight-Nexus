@@ -42,8 +42,52 @@ router.get("/analytics/segments", async (_req, res) => {
   res.json(rows);
 });
 
-router.get("/customers", async (_req, res) => {
-  const { rows } = await pool.query("SELECT * FROM dim_customers ORDER BY customer_id LIMIT 200");
+router.get("/analytics/recent-sales", async (req, res) => {
+  const limit = Math.min(Math.max(Number(req.query.limit || 15), 1), 100);
+  const rows = await analytics.recentSales(limit);
+  res.json(rows);
+});
+
+router.get("/analytics/customer-360/:id", async (req, res) => {
+  const customerId = Number(req.params.id);
+  if (!Number.isInteger(customerId) || customerId <= 0) {
+    return res.status(400).json({ error: "Invalid customer id" });
+  }
+  const result = await analytics.customer360(customerId);
+  if (!result) return res.status(404).json({ error: "Customer not found" });
+  res.json(result);
+});
+
+router.get("/analytics/anomalies/daily-sales", async (req, res) => {
+  const limit = Math.min(Math.max(Number(req.query.limit || 12), 1), 100);
+  const rows = await analytics.dailySalesAnomalies(limit);
+  res.json(rows);
+});
+
+router.get("/analytics/revenue-forecast", async (req, res) => {
+  const months = Number(req.query.months || 6);
+  const growthPct = Number(req.query.growthPct || 6);
+  const result = await analytics.revenueForecast(months, growthPct);
+  res.json(result);
+});
+
+router.get("/customers", async (req, res) => {
+  const limit = Math.min(Math.max(Number(req.query.limit || 200), 1), 1000);
+  const offset = Math.max(Number(req.query.offset || 0), 0);
+  const name = (req.query.name || "").trim();
+
+  let query = "SELECT * FROM dim_customers";
+  const params = [];
+
+  if (name) {
+    params.push(`%${name}%`);
+    query += ` WHERE name ILIKE $${params.length}`;
+  }
+
+  params.push(limit, offset);
+  query += ` ORDER BY customer_id DESC LIMIT $${params.length - 1} OFFSET $${params.length}`;
+
+  const { rows } = await pool.query(query, params);
   res.json(rows);
 });
 

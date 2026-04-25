@@ -12,88 +12,160 @@
       <p>E-commerce Data Warehouse Analytics Dashboard</p>
     </header>
 
-    <main>
-      <section class="card">
-        <h2>Warehouse Health</h2>
-        <div id="health"></div>
-      </section>
+    <main class="layout">
+      <aside class="sidebar card">
+        <h2>Modules</h2>
+        <button class="nav-btn active" data-panel="overviewPanel">Overview</button>
+        <button class="nav-btn" data-panel="topCustomersPanel">Top Customers</button>
+        <button class="nav-btn" data-panel="categoryPanel">Sales by Category</button>
+        <button class="nav-btn" data-panel="growthPanel">Monthly Growth</button>
+        <button class="nav-btn" data-panel="segmentsPanel">Segments</button>
+        <button class="nav-btn" data-panel="recentSalesPanel">Recent Sales</button>
+        <button class="nav-btn" data-panel="anomalyPanel">Anomaly Alerts</button>
+        <button class="nav-btn" data-panel="customer360Panel">Customer 360</button>
+        <button class="nav-btn" data-panel="forecastPanel">Forecast</button>
+        <button class="nav-btn" data-panel="dataEntryPanel">Data Entry</button>
+      </aside>
 
-      <section class="card">
-        <h2>Core KPIs</h2>
-        <div id="kpis" class="kpi-grid"></div>
-      </section>
+      <section class="content">
+        <section id="overviewPanel" class="card panel active">
+          <h2>Warehouse Health</h2>
+          <p class="module-note">Quick system and KPI snapshot for current warehouse state.</p>
+          <div id="health"></div>
+          <h2>Core KPIs</h2>
+          <div id="kpis" class="kpi-grid"></div>
+        </section>
 
-      <section class="card">
-        <h2>Top Customers</h2>
-        <table id="topCustomersTable">
-          <thead>
-            <tr><th>ID</th><th>Name</th><th>Total Spending</th></tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </section>
+        <section id="topCustomersPanel" class="card panel">
+          <h2>Top Customers</h2>
+          <p class="module-note">Highest-value customers ranked by completed order spending.</p>
+          <table id="topCustomersTable">
+            <thead>
+              <tr><th>ID</th><th>Name</th><th>Total Spending</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </section>
 
-      <section class="card">
-        <h2>Sales by Category</h2>
-        <canvas id="categoryChart"></canvas>
-        <table id="categoryTable">
-          <thead>
-            <tr><th>Category</th><th>Sales</th></tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </section>
+        <section id="categoryPanel" class="card panel">
+          <h2>Sales by Category</h2>
+          <p class="module-note">Category contribution to total sales with chart and table view.</p>
+          <canvas id="categoryChart"></canvas>
+          <table id="categoryTable">
+            <thead>
+              <tr><th>Category</th><th>Sales</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </section>
 
-      <section class="card">
-        <h2>Monthly Revenue Growth</h2>
-        <canvas id="revenueChart"></canvas>
-        <table id="growthTable">
-          <thead>
-            <tr><th>Year</th><th>Month</th><th>Revenue</th><th>Previous Revenue</th><th>Growth</th></tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </section>
+        <section id="growthPanel" class="card panel">
+          <h2>Monthly Revenue Growth</h2>
+          <p class="module-note">Month-over-month trend and growth deltas across revenue periods.</p>
+          <canvas id="revenueChart"></canvas>
+          <table id="growthTable">
+            <thead>
+              <tr><th>Year</th><th>Month</th><th>Revenue</th><th>Previous Revenue</th><th>Growth</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </section>
 
-      <section class="card">
-        <h2>Customer Segments</h2>
-        <canvas id="segmentsChart"></canvas>
-        <table id="segmentsTable">
-          <thead>
-            <tr><th>ID</th><th>Name</th><th>Recency (days)</th><th>Frequency</th><th>Monetary</th><th>Segment</th></tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </section>
+        <section id="segmentsPanel" class="card panel">
+          <h2>Customer Segments</h2>
+          <p class="module-note">RFM-style segmentation to classify customer behavior patterns.</p>
+          <canvas id="segmentsChart"></canvas>
+          <table id="segmentsTable">
+            <thead>
+              <tr><th>ID</th><th>Name</th><th>Recency (days)</th><th>Frequency</th><th>Monetary</th><th>Segment</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </section>
 
-      <section class="card form-grid">
-        <div>
-          <h2>Add Customer</h2>
-          <form id="customerForm">
-            <input name="name" placeholder="Name" required />
-            <input name="city" placeholder="City" required />
-            <input name="state" placeholder="State" required />
-            <input name="country" placeholder="Country" value="USA" required />
-            <input name="age_group" placeholder="Age Group (e.g. 25-34)" required />
-            <input name="gender" placeholder="Gender" required />
-            <input name="signup_date" type="date" required />
-            <button type="submit">Create Customer</button>
+        <section id="recentSalesPanel" class="card panel">
+          <h2>Recent Sales Feed</h2>
+          <p class="module-note">Operational feed of latest transactions with product and status context.</p>
+          <table id="recentSalesTable">
+            <thead>
+              <tr><th>Sale ID</th><th>Date</th><th>Customer</th><th>Product</th><th>Category</th><th>Amount</th><th>Status</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </section>
+
+        <section id="anomalyPanel" class="card panel">
+          <h2>Anomaly Alerts (Daily Revenue)</h2>
+          <p class="module-note">Statistical outliers flagged using daily revenue z-scores.</p>
+          <table id="anomalyTable">
+            <thead>
+              <tr><th>Date</th><th>Revenue</th><th>Average</th><th>Std Dev</th><th>Z-Score</th><th>Signal</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </section>
+
+        <section id="customer360Panel" class="card panel">
+          <h2>Customer 360 Lookup</h2>
+          <p class="module-note">Single-customer profile with value metrics and order history.</p>
+          <form id="customer360Form">
+            <input name="customer_id" type="number" placeholder="Customer ID" min="1" required />
+            <button type="submit">Load Customer 360</button>
           </form>
-          <p id="customerMsg"></p>
-        </div>
-        <div>
-          <h2>Add Sale (Fact Insert)</h2>
-          <form id="saleForm">
-            <input name="customer_id" type="number" placeholder="Customer ID" required />
-            <input name="product_id" type="number" placeholder="Product ID" required />
-            <input name="full_date" type="date" required />
-            <input name="quantity" type="number" placeholder="Quantity" min="1" required />
-            <input name="unit_price" type="number" step="0.01" placeholder="Unit Price" required />
-            <input name="discount_pct" type="number" step="0.01" placeholder="Discount %" value="0" />
-            <button type="submit">Insert Sale</button>
+          <p id="customer360Msg"></p>
+          <div id="customer360Profile" class="mini-grid"></div>
+        </section>
+
+        <section id="forecastPanel" class="card panel">
+          <h2>What-If Revenue Forecast</h2>
+          <p class="module-note">Scenario simulation based on configurable monthly growth assumptions.</p>
+          <form id="forecastForm">
+            <input name="months" type="number" placeholder="Months" value="6" min="1" max="12" required />
+            <input name="growthPct" type="number" step="0.1" placeholder="Monthly Growth %" value="6" min="-50" max="100" required />
+            <button type="submit">Run Simulation</button>
           </form>
-          <p id="saleMsg"></p>
-        </div>
+          <p id="forecastMsg"></p>
+          <table id="forecastTable">
+            <thead>
+              <tr><th>Month Index</th><th>Projected Revenue</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </section>
+
+        <section id="dataEntryPanel" class="card panel">
+          <h2>Data Entry</h2>
+          <p class="module-note">Create new customers and sales facts for live warehouse updates.</p>
+          <div class="form-grid">
+            <div>
+            <h2>Add Customer</h2>
+            <form id="customerForm">
+              <input name="name" placeholder="Name" required />
+              <input name="city" placeholder="City" required />
+              <input name="state" placeholder="State" required />
+              <input name="country" placeholder="Country" value="USA" required />
+              <input name="age_group" placeholder="Age Group (e.g. 25-34)" required />
+              <input name="gender" placeholder="Gender" required />
+              <input name="signup_date" type="date" required />
+              <button type="submit">Create Customer</button>
+            </form>
+            <p id="customerMsg"></p>
+            </div>
+            <div>
+            <h2>Add Sale (Fact Insert)</h2>
+            <form id="saleForm">
+              <input name="customer_id" type="number" placeholder="Customer ID" required />
+              <input name="product_id" type="number" placeholder="Product ID" required />
+              <input name="full_date" type="date" required />
+              <input name="quantity" type="number" placeholder="Quantity" min="1" required />
+              <input name="unit_price" type="number" step="0.01" placeholder="Unit Price" required />
+              <input name="discount_pct" type="number" step="0.01" placeholder="Discount %" value="0" />
+              <button type="submit">Insert Sale</button>
+            </form>
+            <p id="saleMsg"></p>
+            </div>
+          </div>
+        </section>
       </section>
     </main>
 

@@ -11,12 +11,41 @@ let categoryChart;
 let revenueChart;
 let segmentsChart;
 
+function setupSidebarNavigation() {
+  const navButtons = Array.from(document.querySelectorAll(".nav-btn"));
+  const panels = Array.from(document.querySelectorAll(".panel"));
+
+  function showPanel(panelId) {
+    panels.forEach((panel) => {
+      panel.classList.toggle("active", panel.id === panelId);
+    });
+    navButtons.forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.panel === panelId);
+    });
+  }
+
+  navButtons.forEach((btn) => {
+    btn.addEventListener("click", () => showPanel(btn.dataset.panel));
+  });
+}
+
 function renderTableRows(tbody, rows, mapper) {
   tbody.innerHTML = rows.map(mapper).join("");
 }
 
 function money(n) {
   return `$${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function dateOnly(value) {
+  return value ? new Date(value).toISOString().slice(0, 10) : "-";
+}
+
+function signalFromZScore(z) {
+  const abs = Math.abs(Number(z || 0));
+  if (abs >= 3) return "critical";
+  if (abs >= 2) return "high";
+  return "warning";
 }
 
 function upsertChart(current, canvasId, config) {
@@ -26,13 +55,15 @@ function upsertChart(current, canvasId, config) {
 }
 
 async function loadDashboard() {
-  const [health, kpis, topCustomers, byCategory, growth, segments] = await Promise.all([
+  const [health, kpis, topCustomers, byCategory, growth, segments, recentSales, anomalies] = await Promise.all([
     fetchJson("/api/health"),
     fetchJson("/api/kpis"),
     fetchJson("/api/analytics/top-customers?limit=10"),
     fetchJson("/api/analytics/sales-by-category"),
     fetchJson("/api/analytics/monthly-growth"),
     fetchJson("/api/analytics/segments"),
+    fetchJson("/api/analytics/recent-sales?limit=12"),
+    fetchJson("/api/analytics/anomalies/daily-sales?limit=12"),
   ]);
 
   document.getElementById("health").textContent = `Connected. DB time: ${new Date(health.dbTime).toLocaleString()}`;
@@ -68,6 +99,20 @@ async function loadDashboard() {
     segments,
     (r) =>
       `<tr><td>${r.customer_id}</td><td>${r.name}</td><td>${r.recency_days}</td><td>${r.frequency}</td><td>${money(r.monetary)}</td><td>${r.segment}</td></tr>`
+  );
+
+  renderTableRows(
+    document.querySelector("#recentSalesTable tbody"),
+    recentSales,
+    (r) =>
+      `<tr><td>${r.sale_id}</td><td>${dateOnly(r.full_date)}</td><td>${r.customer_name}</td><td>${r.product_name}</td><td>${r.category}</td><td>${money(r.sales_amount)}</td><td>${r.order_status}</td></tr>`
+  );
+
+  renderTableRows(
+    document.querySelector("#anomalyTable tbody"),
+    anomalies,
+    (r) =>
+      `<tr><td>${dateOnly(r.full_date)}</td><td>${money(r.revenue)}</td><td>${money(r.avg_revenue)}</td><td>${money(r.std_revenue)}</td><td>${r.z_score}</td><td><span class="badge ${signalFromZScore(r.z_score)}">${signalFromZScore(r.z_score)}</span></td></tr>`
   );
 
   categoryChart = upsertChart(categoryChart, "categoryChart", {
@@ -123,6 +168,34 @@ async function loadDashboard() {
   });
 }
 
+async function loadCustomer360(customerId) {
+  const data = await fetchJson(`/api/analytics/customer-360/${customerId}`);
+  const profile = data.profile;
+  const metrics = data.metrics;
+  const container = document.getElementById("customer360Profile");
+
+  container.innerHTML = `
+    <div class="kpi"><strong>Name</strong><div>${profile.name}</div></div>
+    <div class="kpi"><strong>Location</strong><div>${profile.city}, ${profile.state}</div></div>
+    <div class="kpi"><strong>Orders</strong><div>${metrics.completed_orders}</div></div>
+    <div class="kpi"><strong>LTV</strong><div>${money(metrics.lifetime_value)}</div></div>
+    <div class="kpi"><strong>Avg Order</strong><div>${money(metrics.avg_order_value)}</div></div>
+    <div class="kpi"><strong>Last Order</strong><div>${dateOnly(metrics.last_order_date)}</div></div>
+  `;
+
+  document.getElementById("customer360Msg").textContent = `Loaded profile for customer #${profile.customer_id}`;
+}
+
+async function loadForecast(months, growthPct) {
+  const data = await fetchJson(`/api/analytics/revenue-forecast?months=${months}&growthPct=${growthPct}`);
+  renderTableRows(
+    document.querySelector("#forecastTable tbody"),
+    data.forecast,
+    (r) => `<tr><td>${r.month_index}</td><td>${money(r.projected_revenue)}</td></tr>`
+  );
+  document.getElementById("forecastMsg").textContent = `Simulation ready: ${data.assumptions.months} months at ${data.assumptions.growthPct}% monthly growth.`;
+}
+
 document.getElementById("customerForm").addEventListener("submit", async (event) => {
   event.preventDefault();
   const form = event.target;
@@ -159,6 +232,36 @@ document.getElementById("saleForm").addEventListener("submit", async (event) => 
   }
 });
 
+document.getElementById("customer360Form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = event.target;
+  const customerId = Number(new FormData(form).get("customer_id"));
+  try {
+    await loadCustomer360(customerId);
+  } catch (error) {
+    document.getElementById("customer360Msg").textContent = error.message;
+  }
+});
+
+document.getElementById("forecastForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = event.target;
+  const formData = new FormData(form);
+  const months = Number(formData.get("months"));
+  const growthPct = Number(formData.get("growthPct"));
+  try {
+    await loadForecast(months, growthPct);
+  } catch (error) {
+    document.getElementById("forecastMsg").textContent = error.message;
+  }
+});
+
+setupSidebarNavigation();
+
 loadDashboard().catch((error) => {
   document.getElementById("health").textContent = `Failed to load dashboard: ${error.message}`;
+});
+
+loadForecast(6, 6).catch((error) => {
+  document.getElementById("forecastMsg").textContent = `Failed to run forecast: ${error.message}`;
 });

@@ -29,6 +29,10 @@ Full-stack website + PostgreSQL data warehouse for e-commerce analytics, impleme
   - Sales by product category
   - Monthly revenue growth with CTE + window function
   - Loyalty segmentation using recency/frequency/monetary logic
+  - Recent sales feed with enriched dimensions
+  - Customer 360 drilldown (profile + metrics + latest orders)
+  - Daily revenue anomaly detection (z-score based alerts)
+  - What-if revenue forecast simulation (growth assumptions)
 - Interactive dashboard showing KPIs and query outputs.
 
 ## Setup
@@ -55,6 +59,10 @@ App URL: `http://localhost:4000`
 - `GET /api/analytics/sales-by-category`
 - `GET /api/analytics/monthly-growth`
 - `GET /api/analytics/segments`
+- `GET /api/analytics/recent-sales`
+- `GET /api/analytics/customer-360/:id`
+- `GET /api/analytics/anomalies/daily-sales`
+- `GET /api/analytics/revenue-forecast?months=6&growthPct=6`
 - `POST /api/customers`
 - `PUT /api/customers/:id`
 - `POST /api/sales`
