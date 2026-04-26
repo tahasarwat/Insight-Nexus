@@ -10,6 +10,7 @@ async function fetchJson(url, options) {
 let categoryChart;
 let revenueChart;
 let segmentsChart;
+let switchPanel = () => {};
 
 function setupSidebarNavigation() {
   const navButtons = Array.from(document.querySelectorAll(".nav-btn"));
@@ -27,6 +28,7 @@ function setupSidebarNavigation() {
   navButtons.forEach((btn) => {
     btn.addEventListener("click", () => showPanel(btn.dataset.panel));
   });
+  switchPanel = showPanel;
 }
 
 function renderTableRows(tbody, rows, mapper) {
@@ -80,6 +82,22 @@ async function loadDashboard() {
     topCustomers,
     (r) => `<tr><td>${r.customer_id}</td><td>${r.name}</td><td>${money(r.total_spending)}</td></tr>`
   );
+
+  const growthExplainer = document.getElementById("growthExplainer");
+  const latest = growth[growth.length - 1];
+  const previous = growth.length > 1 ? growth[growth.length - 2] : null;
+  growthExplainer.innerHTML = latest
+    ? `
+      <div class="kpi"><strong>What it means</strong><div>Change in monthly revenue vs previous month.</div></div>
+      <div class="kpi"><strong>Current Month Revenue</strong><div>${money(latest.revenue)}</div></div>
+      <div class="kpi"><strong>Previous Month Revenue</strong><div>${money(latest.prev_revenue)}</div></div>
+      <div class="kpi"><strong>Monthly Growth</strong><div>${money(latest.growth)}</div></div>
+    `
+    : `<div class="kpi"><strong>Monthly Growth</strong><div>No data yet.</div></div>`;
+
+  if (previous) {
+    growthExplainer.innerHTML += `<div class="kpi"><strong>Prior Month Growth</strong><div>${money(previous.growth)}</div></div>`;
+  }
 
   renderTableRows(
     document.querySelector("#categoryTable tbody"),
@@ -168,6 +186,22 @@ async function loadDashboard() {
   });
 }
 
+async function loadProductsIntoSaleForm() {
+  const products = await fetchJson("/api/products?limit=500");
+  const select = document.getElementById("saleProductSelect");
+  const previousValue = select.value;
+  select.innerHTML = '<option value="">Select product...</option>';
+  for (const p of products) {
+    const option = document.createElement("option");
+    option.value = p.product_id;
+    option.textContent = `#${p.product_id} - ${p.product_name} (${p.category})`;
+    select.appendChild(option);
+  }
+  if (previousValue) {
+    select.value = previousValue;
+  }
+}
+
 async function loadCustomer360(customerId) {
   const data = await fetchJson(`/api/analytics/customer-360/${customerId}`);
   const profile = data.profile;
@@ -219,14 +253,16 @@ document.getElementById("saleForm").addEventListener("submit", async (event) => 
   const form = event.target;
   const body = Object.fromEntries(new FormData(form).entries());
   try {
-    await fetchJson("/api/sales", {
+    const sale = await fetchJson("/api/sales", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
-    document.getElementById("saleMsg").textContent = "Sale inserted.";
+    document.getElementById("saleMsg").textContent = `Sale inserted (Sale ID: ${sale.sale_id}). Redirected to Recent Sales for verification.`;
     form.reset();
     await loadDashboard();
+    switchPanel("recentSalesPanel");
+    document.getElementById("recentSalesMsg").textContent = `Latest insert success: Sale ID ${sale.sale_id} for Customer ${sale.customer_id}. Check top rows below.`;
   } catch (error) {
     document.getElementById("saleMsg").textContent = error.message;
   }
@@ -257,6 +293,9 @@ document.getElementById("forecastForm").addEventListener("submit", async (event)
 });
 
 setupSidebarNavigation();
+loadProductsIntoSaleForm().catch((error) => {
+  document.getElementById("saleMsg").textContent = `Could not load products: ${error.message}`;
+});
 
 loadDashboard().catch((error) => {
   document.getElementById("health").textContent = `Failed to load dashboard: ${error.message}`;

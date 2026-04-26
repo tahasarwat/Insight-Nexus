@@ -91,6 +91,24 @@ router.get("/customers", async (req, res) => {
   res.json(rows);
 });
 
+router.get("/products", async (req, res) => {
+  const limit = Math.min(Math.max(Number(req.query.limit || 200), 1), 1000);
+  const search = (req.query.search || "").trim();
+  const params = [];
+  let query = "SELECT product_id, product_name, category, subcategory, base_price FROM dim_products";
+
+  if (search) {
+    params.push(`%${search}%`);
+    query += ` WHERE product_name ILIKE $${params.length} OR category ILIKE $${params.length}`;
+  }
+
+  params.push(limit);
+  query += ` ORDER BY product_name ASC LIMIT $${params.length}`;
+
+  const { rows } = await pool.query(query, params);
+  res.json(rows);
+});
+
 router.post("/customers", async (req, res) => {
   const { name, city, state, country, age_group, gender, signup_date } = req.body;
   const q = `
@@ -117,8 +135,44 @@ router.put("/customers/:id", async (req, res) => {
 
 router.post("/sales", async (req, res) => {
   const { customer_id, product_id, full_date, quantity, unit_price, discount_pct } = req.body;
-  const timeResult = await pool.query("SELECT time_id FROM dim_time WHERE full_date = $1", [full_date]);
-  if (!timeResult.rows[0]) return res.status(400).json({ error: "Date not found in dim_time" });
+  let timeResult = await pool.query("SELECT time_id FROM dim_time WHERE full_date = $1", [full_date]);
+  if (!timeResult.rows[0]) {
+    const parsed = new Date(full_date);
+    if (Number.isNaN(parsed.getTime())) {
+      return res.status(400).json({ error: "Invalid date format" });
+    }
+    const monthNames = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+    const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const month = parsed.getUTCMonth() + 1;
+    const quarter = Math.floor((month - 1) / 3) + 1;
+    await pool.query(
+      `INSERT INTO dim_time (full_date, day_of_week, month, month_name, quarter, year)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (full_date) DO NOTHING`,
+      [
+        full_date,
+        dayNames[parsed.getUTCDay()],
+        month,
+        monthNames[month - 1],
+        quarter,
+        parsed.getUTCFullYear(),
+      ]
+    );
+    timeResult = await pool.query("SELECT time_id FROM dim_time WHERE full_date = $1", [full_date]);
+  }
   const time_id = timeResult.rows[0].time_id;
   const gross = Number(quantity) * Number(unit_price);
   const sales_amount = Number((gross * (1 - Number(discount_pct || 0) / 100)).toFixed(2));

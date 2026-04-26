@@ -141,6 +141,7 @@ form {
 }
 
 input,
+select,
 button {
   padding: 9px;
   border-radius: 7px;
